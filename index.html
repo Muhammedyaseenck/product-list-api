@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Product List</title>
+
+    <style>
+      :root {
+        --bg: #f6f5f2;
+        --card-bg: #ffffff;
+        --text: #1c1c1c;
+        --muted: #6b6b6b;
+        --accent: #1c4d3e;
+        --border: #e4e2dc;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      header {
+        padding: 40px 24px 24px;
+        text-align: center;
+      }
+
+      header h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+        letter-spacing: 0.3px;
+      }
+
+      header p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      #status {
+        text-align: center;
+        color: var(--muted);
+        padding: 20px;
+        font-size: 14px;
+      }
+
+      #productsListContainer {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 24px 60px;
+      }
+
+      .product-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        transition:
+          transform 0.15s ease,
+          box-shadow 0.15s ease;
+      }
+
+      .product-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+      }
+
+      .product-card img {
+        width: 100%;
+        height: 160px;
+        object-fit: contain;
+        margin-bottom: 12px;
+        background: #fafafa;
+        border-radius: 4px;
+        padding: 8px;
+      }
+
+      .product-category {
+        font-size: 11px;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        margin-bottom: 6px;
+      }
+
+      .product-title {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0 0 8px;
+        line-height: 1.4;
+        min-height: 40px;
+      }
+
+      .product-footer {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .product-price {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+
+      .product-rating {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      html {
+        overflow-y: scroll;
+      }
+
+      @media (max-width: 500px) {
+        #productsListContainer {
+          grid-template-columns: 1fr;
+          padding: 0 16px 40px;
+        }
+
+        header {
+          padding: 30px 16px 20px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <header>
+      <h1>Product List</h1>
+      <p>Live data from the Fake Store API</p>
+    </header>
+
+    <div id="status">Loading products...</div>
+
+    <div id="productsListContainer"></div>
+
+    <script>
+      var productsListEl = document.getElementById("productsListContainer");
+      var statusEl = document.getElementById("status");
+
+      // Function to fetch all products from the API
+      async function getAllProducts() {
+        try {
+          statusEl.style.display = "block";
+          statusEl.textContent = "Loading products...";
+
+          var productsResponse = await fetch(
+            "https://fakestoreapi.com/products",
+            {
+              method: "GET",
+            }
+          );
+
+          // Check whether the request was successful
+          if (!productsResponse.ok) {
+            throw new Error(
+              "Request failed with status " + productsResponse.status
+            );
+          }
+
+          // Convert the response into JavaScript data
+          var data = await productsResponse.json();
+
+          // Check whether the API returned an array
+          if (!Array.isArray(data)) {
+            throw new Error("Invalid product data received from the API.");
+          }
+
+          // Display the products
+          renderProducts(data);
+        } catch (err) {
+          console.log("Error fetching products:", err);
+
+          productsListEl.innerHTML = "";
+
+          statusEl.style.display = "block";
+          statusEl.textContent =
+            "Could not load products. Please try again later.";
+        }
+      }
+
+      // Function to create and display product cards
+      function renderProducts(products) {
+        var productCards = "";
+
+        // Check whether products are available
+        if (products.length === 0) {
+          statusEl.style.display = "block";
+          statusEl.textContent = "No products found.";
+          return;
+        }
+
+        // Loop through each product
+        for (var prod of products) {
+          productCards +=
+            '<div class="product-card">' +
+            '<img src="' +
+            prod.image +
+            '" alt="' +
+            prod.title +
+            '" />' +
+            '<div class="product-category">' +
+            prod.category +
+            "</div>" +
+            '<p class="product-title">' +
+            prod.title +
+            "</p>" +
+            '<div class="product-footer">' +
+            '<span class="product-price">$' +
+            Number(prod.price).toFixed(2) +
+            "</span>" +
+            '<span class="product-rating">&#9733; ' +
+            prod.rating.rate +
+            " (" +
+            prod.rating.count +
+            ")</span>" +
+            "</div>" +
+            "</div>";
+        }
+
+        // IMPORTANT: Insert the product cards into the webpage
+        productsListEl.innerHTML = productCards;
+
+        // Hide the loading message after displaying the products
+        statusEl.style.display = "none";
+      }
+
+      // Call the function when the page loads
+      getAllProducts();
+    </script>
+  </body>
+</html>
